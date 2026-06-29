@@ -22,22 +22,44 @@ def poll():
             if r.ok:
                 for x in r.json().get("result",[]):
                     u=x["update_id"]
-                    if "message" in x and "text" in x["message"]:
-                        c=x["message"]["chat"]["id"]; t=x["message"]["text"]
-                        if t.startswith("/start"):
-                            msg(c,"Bot Cloud 24/7! Escribe 'imagen de...' o preguntame.")
-                        elif "imagen" in t.lower():
-                            p=t.lower().replace("/imagen","").replace("imagen de","").replace("imagen","").strip() or "paisaje"
-                            msg(c,"Generando imagen...")
-                            try:
-                                r2=ses.get("https://image.pollinations.ai/prompt/"+requests.utils.quote(p),timeout=60)
-                                ses.post(f"https://api.telegram.org/bot{TOKEN}/sendPhoto",data={"chat_id":c},files={"photo":("i.jpg",r2.content,"image/jpeg")})
-                            except Exception as e: msg(c,str(e))
-                        else:
-                            r2 = ses.post("https://api.groq.com/openai/v1/chat/completions",
-                                headers={"Authorization":"Bearer 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"},
-                                json={"model":"llama-3.3-70b-versatile","messages":[{"role":"system","content":"Eres un asistente IA conectado a internet."},{"role":"user","content":t}],"max_tokens":2000})
-                            msg(c,r2.json()["choices"][0]["message"]["content"])
+                    if "message" not in x: continue
+                    c=x["message"]["chat"]["id"]
+                    
+                    if "document" in x["message"]:
+                        doc = x["message"]["document"]
+                        fn = doc.get("file_name","archivo")
+                        msg(c,f"Recibiendo: {fn}...")
+                        try:
+                            f = ses.get(f"https://api.telegram.org/bot{TOKEN}/getFile?file_id={doc['file_id']}")
+                            fp = f.json()["result"]["file_path"]
+                            r = ses.get(f"https://api.telegram.org/file/bot{TOKEN}/{fp}")
+                            txt = r.text[:3000] if fn.lower().endswith((".txt",".py",".md")) else "(formato no soportado)"
+                            if txt:
+                                r2 = ses.post("https://api.groq.com/openai/v1/chat/completions",
+                                    headers={"Authorization":"Bearer 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"},
+                                    json={"model":"llama-3.3-70b-versatile","messages":[{"role":"user","content":f"Analiza: {fn}\n{txt}"}],"max_tokens":2000})
+                                msg(c,r2.json()["choices"][0]["message"]["content"])
+                            else: msg(c,"Solo soporto .txt .py .md por ahora.")
+                        except Exception as e: msg(c,f"Error: {e}")
+                        continue
+                    
+                    t = x["message"].get("text","")
+                    if not t: continue
+                    
+                    if t.startswith("/start"):
+                        msg(c,"Bot 24/7! 'imagen de...', archivos, o preguntame.")
+                    elif "imagen" in t.lower():
+                        p = t.lower().replace("/imagen","").replace("imagen de","").replace("imagen","").strip() or "paisaje"
+                        msg(c,"Generando imagen...")
+                        try:
+                            r2 = ses.get("https://image.pollinations.ai/prompt/"+requests.utils.quote(p),timeout=60)
+                            ses.post(f"https://api.telegram.org/bot{TOKEN}/sendPhoto",data={"chat_id":c},files={"photo":("i.jpg",r2.content,"image/jpeg")})
+                        except Exception as e: msg(c,str(e))
+                    else:
+                        r2 = ses.post("https://api.groq.com/openai/v1/chat/completions",
+                            headers={"Authorization":"Bearer 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"},
+                            json={"model":"llama-3.3-70b-versatile","messages":[{"role":"system","content":"Eres un asistente IA conectado a internet."},{"role":"user","content":t}],"max_tokens":2000})
+                        msg(c,r2.json()["choices"][0]["message"]["content"])
         except: time.sleep(3)
 
 threading.Thread(target=poll,daemon=True).start()
