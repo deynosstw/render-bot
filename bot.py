@@ -6,6 +6,9 @@ ses = requests.Session()
 app = Flask(__name__)
 ult=0
 
+@app.route("/")
+def home(): return "Bot OK"
+
 def h(c,t):
     ses.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",json={"chat_id":c,"text":t[:4000]})
 
@@ -14,10 +17,7 @@ def g(txt):
         headers={"Authorization":"Bearer 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"},
         json={"model":"llama-3.3-70b-versatile","messages":[{"role":"user","content":txt}],"max_tokens":2000})
     try: return r.json()["choices"][0]["message"]["content"]
-    except: return str(r.json())
-
-@app.route("/")
-def home(): return "OK"
+    except: return "Error"
 
 def poll():
     global ult
@@ -29,15 +29,14 @@ def poll():
                 for x in r.json().get("result",[]):
                     ult=x["update_id"]
                     if "message" not in x: continue
-                    c=x["message"]["chat"]["id"]
-                    t=x["message"].get("text","")
+                    c=x["message"]["chat"]["id"]; t=x["message"].get("text","")
                     if not t: continue
-                    if "imagen" in t.lower():
+                    if "imagen" in t:
                         p=t.lower().replace("imagen de","").replace("imagen","").strip() or "paisaje"
                         try:
                             r2=ses.get("https://image.pollinations.ai/prompt/"+requests.utils.quote(p),timeout=60)
                             ses.post(f"https://api.telegram.org/bot{TOKEN}/sendPhoto",data={"chat_id":c},files={"photo":("i.jpg",r2.content,"image/jpeg")})
-                        except Exception as e: h(c,str(e))
+                        except: h(c,"Error")
                     else: h(c,g(t))
         except: time.sleep(3)
 
