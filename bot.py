@@ -54,7 +54,7 @@ while True:
                 continue
             t=x["message"].get("text","")
             if not t: continue
-            if t.startswith("/start"): h(c,"Bot 24/7! Envia archivos o 'imagen de...'")
+            if t.startswith("/start"): h(c,"Bot 24/7! 'imagen de...' para fotos, o preguntame cualquier cosa.")
             elif "imagen" in t.lower():
                 p=t.lower().replace("/imagen","").replace("imagen de","").replace("imagen","").strip() or "paisaje"
                 try:
