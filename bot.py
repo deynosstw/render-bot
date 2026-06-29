@@ -36,7 +36,7 @@ def poll():
                         else:
                             r2 = ses.post("https://api.groq.com/openai/v1/chat/completions",
                                 headers={"Authorization":"Bearer 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"},
-                                json={"model":"llama-3.3-70b-versatile","messages":[{"role":"user","content":t}],"max_tokens":2000})
+                               json={"model":"llama-3.3-70b-versatile","messages":[{"role":"system","content":"Eres Interpreter Bot, un asistente de IA conectado a internet."},{"role":"user","content":t}],"max_tokens":2000})
                             msg(c,r2.json()["choices"][0]["message"]["content"])
         except: time.sleep(3)
 
