@@ -25,10 +25,10 @@ def poll():
                     if "message" in x and "text" in x["message"]:
                         c=x["message"]["chat"]["id"]; t=x["message"]["text"]
                         if t.startswith("/start"):
-                            msg(c,"Bot Cloud 24/7! /imagen <desc>")
-                        elif t.startswith("/imagen"):
-                            p=t.replace("/imagen","").strip() or "paisaje"
-                            msg(c,"Generando...")
+                            msg(c,"Bot Cloud 24/7! Escribe 'imagen de...' o preguntame.")
+                        elif "imagen" in t.lower():
+                            p=t.lower().replace("/imagen","").replace("imagen de","").replace("imagen","").strip() or "paisaje"
+                            msg(c,"Generando imagen...")
                             try:
                                 r2=ses.get("https://image.pollinations.ai/prompt/"+requests.utils.quote(p),timeout=60)
                                 ses.post(f"https://api.telegram.org/bot{TOKEN}/sendPhoto",data={"chat_id":c},files={"photo":("i.jpg",r2.content,"image/jpeg")})
@@ -36,7 +36,7 @@ def poll():
                         else:
                             r2 = ses.post("https://api.groq.com/openai/v1/chat/completions",
                                 headers={"Authorization":"Bearer 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"},
-                               json={"model":"llama-3.3-70b-versatile","messages":[{"role":"system","content":"Eres Interpreter Bot, un asistente de IA conectado a internet."},{"role":"user","content":t}],"max_tokens":2000})
+                                json={"model":"llama-3.3-70b-versatile","messages":[{"role":"system","content":"Eres un asistente IA conectado a internet."},{"role":"user","content":t}],"max_tokens":2000})
                             msg(c,r2.json()["choices"][0]["message"]["content"])
         except: time.sleep(3)
 
